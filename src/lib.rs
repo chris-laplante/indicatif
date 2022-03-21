@@ -241,5 +241,7 @@ pub use crate::state::{ProgressFinish, ProgressState};
 pub use crate::style::ProgressStyle;
 pub use crate::term_like::TermLike;
 
+pub use crate::state::BARRIER;
+
 #[cfg(feature = "rayon")]
 pub use crate::rayon::ParallelProgressIterator;

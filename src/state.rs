@@ -1,8 +1,9 @@
-use std::borrow::Cow;
+use lazy_static::lazy_static;
+use std::borrow::{Borrow, Cow};
 use std::fmt;
 use std::io;
 use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
-use std::sync::{Arc, Mutex, Weak};
+use std::sync::{Arc, Barrier, Mutex, Weak};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -293,6 +294,10 @@ pub(crate) struct Ticker {
     interval: Duration,
 }
 
+lazy_static! {
+    pub static ref BARRIER: Barrier = Barrier::new(2);
+}
+
 impl Ticker {
     pub(crate) fn spawn(arc: &Arc<Mutex<BarState>>, interval: Duration) {
         let mut state = arc.lock().unwrap();
@@ -330,9 +335,17 @@ impl Ticker {
             }
 
             self.interval = interval;
+
+            // Barrier #2
+            BARRIER.borrow().wait();
+
             state.draw(false, Instant::now()).ok();
             drop(state); // Don't forget to drop the lock before sleeping
             drop(arc); // Also need to drop Arc otherwise BarState won't be dropped
+
+            // Barrier #3
+            // BARRIER.borrow().wait();
+
             thread::sleep(self.interval);
         }
     }
