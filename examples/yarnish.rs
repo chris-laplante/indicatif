@@ -69,12 +69,14 @@ pub fn main() {
         PAPER
     );
     let m = MultiProgress::new();
+    let mut to_clear = vec![];
     let handles: Vec<_> = (0..4u32)
         .map(|i| {
             let count = rng.gen_range(30..80);
             let pb = m.add(ProgressBar::new(count));
             pb.set_style(spinner_style.clone());
             pb.set_prefix(format!("[{}/?]", i + 1));
+            to_clear.push(pb.clone());
             thread::spawn(move || {
                 let mut rng = rand::thread_rng();
                 let pkg = PACKAGES.choose(&mut rng).unwrap();
@@ -91,7 +93,10 @@ pub fn main() {
     for h in handles {
         let _ = h.join();
     }
-    m.clear().unwrap();
+
+    for pb in to_clear.drain(..) {
+        pb.finish_and_clear();
+    }
 
     println!("{} Done in {}", SPARKLE, HumanDuration(started.elapsed()));
 }
